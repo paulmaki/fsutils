@@ -1,4 +1,4 @@
-package main
+package fsutils
 
 import (
 	"log"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func main() {
+func frequency() {
 	filepath.Walk(".", walker)
 }
 

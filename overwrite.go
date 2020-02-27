@@ -1,4 +1,4 @@
-package main
+package fsutils
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func main() {
+func overwrite() {
 	log.Panicln("You realize this wipes directories?")
 }
 

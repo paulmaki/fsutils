@@ -1,4 +1,4 @@
-package main
+package fsutils
 
 import (
 	"bufio"
@@ -25,7 +25,7 @@ func (c Counts) String() string {
 	return fmt.Sprintf("Counts:Dir:%d [File %d / %d]", c.dirs, c.remove, c.total)
 }
 
-func main() {
+func removeByExtension() {
 
 	var dpath string
 	var minbeforeaskingfordeletion int
