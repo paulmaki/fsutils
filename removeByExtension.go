@@ -25,7 +25,7 @@ func (c Counts) String() string {
 	return fmt.Sprintf("Counts:Dir:%d [File %d / %d]", c.dirs, c.remove, c.total)
 }
 
-func removeByExtension() {
+func RemoveByExtension() {
 
 	var dpath string
 	var minbeforeaskingfordeletion int
