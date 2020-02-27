@@ -14,6 +14,7 @@ var truncateFiles bool
 var numRemoves = make(map[string]int)
 var c Counts
 var removeDirParts = make(map[string]bool)
+var config Config
 
 type Counts struct {
 	remove int
@@ -25,21 +26,30 @@ func (c Counts) String() string {
 	return fmt.Sprintf("Counts:Dir:%d [File %d / %d]", c.dirs, c.remove, c.total)
 }
 
-func RemoveByExtension() {
+type Config struct {
+	minFilesBeforeQuestion int
+	maxExtensionLength     int
+	clearNonExtensionFiles bool
+	truncateFiles          bool
+}
 
-	var dpath string
-	var minbeforeaskingfordeletion int
-	var maxextlength int
-	var clearNonExtensionFiles bool
+func init() {
+	config = NewConfig()
+}
 
-	flag.StringVar(&dpath, "p", "", "Default path")
-	flag.IntVar(&minbeforeaskingfordeletion, "min", 100, "Minimum observed files before deleting")
-	flag.IntVar(&maxextlength, "maxlen", 0, "max extension length [0 to ignore]")
-	flag.BoolVar(&clearNonExtensionFiles, "nonext", false, "Automatically clear files without extensions")
-	flag.BoolVar(&truncateFiles, "truncate", false, "Truncate the file before removing")
+func NewConfig() (config Config) {
+	flag.IntVar(&config.minFilesBeforeQuestion, "min", 100, "Minimum observed files before deleting")
+	flag.IntVar(&config.maxExtensionLength, "maxlen", 0, "max extension length [0 to ignore]")
+	flag.BoolVar(&config.clearNonExtensionFiles, "nonext", false, "Automatically clear files without extensions")
+	flag.BoolVar(&config.truncateFiles, "truncate", false, "Truncate the file before removing")
 	flag.Parse()
 
-	if len(dpath) == 0 {
+	return
+}
+
+func RemoveByExtension(basepath string) {
+
+	if len(basepath) == 0 {
 		print("Failed to get default path")
 		flag.Usage()
 		os.Exit(1)
@@ -53,7 +63,7 @@ func RemoveByExtension() {
 
 	extensionFiles := make(map[string][]string)
 
-	filepath.Walk(dpath, func(path string, info os.FileInfo, err error) error {
+	filepath.Walk(basepath, func(path string, info os.FileInfo, err error) error {
 
 		if info.IsDir() {
 			c.dirs++
@@ -66,7 +76,7 @@ func RemoveByExtension() {
 
 		ext = filepath.Ext(path)
 
-		if clearNonExtensionFiles && len(ext) <= 1 {
+		if config.clearNonExtensionFiles && len(ext) <= 1 {
 			err := removePath(path)
 			println("Removing non ext", path)
 			if err != nil {
@@ -76,7 +86,7 @@ func RemoveByExtension() {
 			return err
 		}
 
-		if maxextlength > 0 && len(ext) > maxextlength+1 {
+		if config.maxExtensionLength > 0 && len(ext) > config.maxExtensionLength+1 {
 			err := removePath(path)
 			println("Removing long extension ext", path)
 			return err
@@ -84,7 +94,7 @@ func RemoveByExtension() {
 
 		extensionFiles[ext] = append(extensionFiles[ext], path)
 
-		if len(extensionFiles[ext]) < minbeforeaskingfordeletion {
+		if len(extensionFiles[ext]) < config.minFilesBeforeQuestion {
 			return nil
 		}
 
