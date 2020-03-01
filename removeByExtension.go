@@ -2,7 +2,6 @@ package fsutils
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -27,43 +26,29 @@ func (c Counts) String() string {
 }
 
 type Config struct {
-	minFilesBeforeQuestion int
-	maxExtensionLength     int
-	clearNonExtensionFiles bool
-	truncateFiles          bool
+	MinFilesBeforeQuestion int
+	MaxExtensionLength     int
+	ClearNonExtensionFiles bool
+	TruncateFiles          bool
+	Basepath               string
 }
 
-func init() {
-	config = NewConfig()
-}
+func RemoveByExtension(config Config) error {
 
-func NewConfig() (config Config) {
-	flag.IntVar(&config.minFilesBeforeQuestion, "min", 100, "Minimum observed files before deleting")
-	flag.IntVar(&config.maxExtensionLength, "maxlen", 0, "max extension length [0 to ignore]")
-	flag.BoolVar(&config.clearNonExtensionFiles, "nonext", false, "Automatically clear files without extensions")
-	flag.BoolVar(&config.truncateFiles, "truncate", false, "Truncate the file before removing")
-	flag.Parse()
-
-	return
-}
-
-func RemoveByExtension(basepath string) {
-
-	if len(basepath) == 0 {
-		print("Failed to get default path")
-		flag.Usage()
-		os.Exit(1)
-	}
+	var basepath = config.Basepath
 
 	deleteMap := make(map[string]bool)
+	extensionFiles := make(map[string][]string)
 
 	var ext string
 
 	scanner := bufio.NewScanner(os.Stdin)
 
-	extensionFiles := make(map[string][]string)
+	return filepath.Walk(basepath, func(path string, info os.FileInfo, err error) error {
 
-	filepath.Walk(basepath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 
 		if info.IsDir() {
 			c.dirs++
@@ -76,7 +61,7 @@ func RemoveByExtension(basepath string) {
 
 		ext = filepath.Ext(path)
 
-		if config.clearNonExtensionFiles && len(ext) <= 1 {
+		if config.ClearNonExtensionFiles && len(ext) <= 1 {
 			err := removePath(path)
 			println("Removing non ext", path)
 			if err != nil {
@@ -86,7 +71,7 @@ func RemoveByExtension(basepath string) {
 			return err
 		}
 
-		if config.maxExtensionLength > 0 && len(ext) > config.maxExtensionLength+1 {
+		if config.MaxExtensionLength > 0 && len(ext) > config.MaxExtensionLength+1 {
 			err := removePath(path)
 			println("Removing long extension ext", path)
 			return err
@@ -94,7 +79,7 @@ func RemoveByExtension(basepath string) {
 
 		extensionFiles[ext] = append(extensionFiles[ext], path)
 
-		if len(extensionFiles[ext]) < config.minFilesBeforeQuestion {
+		if len(extensionFiles[ext]) < config.MinFilesBeforeQuestion {
 			return nil
 		}
 
@@ -167,11 +152,8 @@ func RemoveByExtension(basepath string) {
 				log.Println(err)
 			}
 		}
-
 		return nil
 	})
-
-	return
 }
 
 func removePath(path string) error {
