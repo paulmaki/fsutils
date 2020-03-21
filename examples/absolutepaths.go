@@ -13,8 +13,8 @@ func main() {
 
 	var filesOnly bool
 	var dirsOnly bool
-	flag.BoolVar(&filesOnly, "fo", false, "files only")
-	flag.BoolVar(&dirsOnly, "do", false, "dirs only")
+	flag.BoolVar(&filesOnly, "files", false, "files only")
+	flag.BoolVar(&dirsOnly, "dirs", false, "dirs only")
 	flag.Parse()
 
 	var err error
